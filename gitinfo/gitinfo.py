@@ -6,7 +6,7 @@ import click
 
 
 INFO_QUERY = """\
-query($owner: String!, $repo: String!) {
+query($owner: String!, $repo: String!, $branch: String!) {
     repository(owner: $owner, name: $repo) {
     createdAt
     diskUsage
@@ -28,7 +28,7 @@ query($owner: String!, $repo: String!) {
       url
     }
     licenseInfo { url spdxId }
-    object(expression:"master") {
+    object(expression:$branch) {
     ... on Commit {
             history {
                 totalCount
@@ -143,7 +143,11 @@ def Size(input_bytes: int) -> str:
 )
 @click.option(
     "-d", "--depth", type=click.IntRange(min=1), default=1, show_default=True,
-    help="Depth to traverse file tree"
+    help="Depth to traverse file tree."
+)
+@click.option(
+    "-b", "--branch", type=click.STRING, default="HEAD", show_default=True,
+    help="Enter branch name or commit hash to view info or files from that specific branch/commit."
 )
 def main(url, **options):
     """
@@ -169,7 +173,7 @@ def main(url, **options):
             {
                 "owner": owner,
                 "repo": repo,
-                "path": f"master:{options['path']}"
+                "path": f"{options['branch']}:{options['path']}"
             }
         )
         if list(data.keys())[0] == "errors":
@@ -182,7 +186,7 @@ def main(url, **options):
             return
 
         entries = sort_entries(entries)
-        root = populate_tree(f"./{options['path']}", entries)
+        root = populate_tree(f".{'/' if options['path'] else ''}{options['path']}", entries)
 
         for pre, fill, node in RenderTree(root, style=ContRoundStyle()):
             tree = "%s%s" % (pre, node.name)
@@ -191,7 +195,7 @@ def main(url, **options):
     elif options["lang"]:
         token = get_token()
         owner, repo = get_url_info(url)
-        data, rate_limit = run_query(LANG_QUERY, token, {"owner": owner, "repo": repo})
+        data, rate_limit = run_query(LANG_QUERY, token, {"owner": owner, "repo": repo, "branch": options["branch"]})
         if list(data.keys())[0] == "errors":
             print(data["errors"][0]["message"])
             return
@@ -212,7 +216,7 @@ def main(url, **options):
         matrix = []
         for lang in data["edges"]:
             langs.append(
-                f"[{lang['node']['color']}]"
+                f"[{lang['node']['color'] if lang['node']['color'] else '#FFFFFF'}]"
                 f"{lang['node']['name']}[/] - "
                 f"{Number(round(100 * lang['size'] / total_size, 2))}%"
             )
@@ -232,7 +236,7 @@ def main(url, **options):
     else:
         token = get_token()
         owner, repo = get_url_info(url)
-        data, rate_limit = run_query(INFO_QUERY, token, {"owner": owner, "repo": repo})
+        data, rate_limit = run_query(INFO_QUERY, token, {"owner": owner, "repo": repo, "branch": options["branch"]})
         if list(data.keys())[0] == "errors":
             print(data["errors"][0]["message"])
             return

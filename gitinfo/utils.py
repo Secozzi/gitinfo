@@ -132,6 +132,9 @@ def get_url_info(url: str) -> Tuple[str, str] | List[str]:
 
 
 def humanize_time(time_str):
+    """
+    Convert datetime into a more human-friendly format
+    """
     if not time_str:
         return "null"
 
@@ -152,14 +155,17 @@ def humanize_time(time_str):
             return f"{t} {times_str[6-i]}{'' if t == 1 else 's'} ago"
 
 
-def human_size(bytes: int, units=None):
+def human_size(bytes: int | float, units=None) -> str:
+    """
+    Convert bytes into a more human-friendly format
+    """
     if units is None:
-        units = [' bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
+        units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
     return f"{round(bytes, 2)} " + units[0] if bytes < 1024 else human_size(bytes / 1024, units[1:])
 
 
 class FileEntry(NodeMixin):
-    def __init__(self, name: str, size: str = None, parent=None, children=None):
+    def __init__(self, name: str, size: str = None, parent=None, children=None) -> None:
         super(FileEntry, self).__init__()
 
         if size != None:
@@ -173,6 +179,14 @@ class FileEntry(NodeMixin):
 
 
 def populate_tree(root_name: str, data: dict) -> "anytree.Node":
+    """
+    Populate the tree
+    :param root_name: str
+        Name of root node
+    :param data: dict
+        Data
+    :return: anytree.node
+    """
     root = FileEntry(root_name)
 
     def edges(tree, parent=None):
