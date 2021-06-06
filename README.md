@@ -2,7 +2,13 @@
 Quickly get information about a Github repository
 
 ## Installation
+Install via pip:
 `pip install gitinfo`
+
+Then set user token:
+`gitinfo <token> --set-token`
+
+If token is not set, the application will not work
 
 ## Usage
 

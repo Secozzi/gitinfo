@@ -251,7 +251,18 @@ def main(url, **options):
         )
 
         latestRelease = data["latestRelease"]
+        if not latestRelease:
+            latestRelease = {
+                "url": "",
+                "name": "None"
+            }
+
         licenseInfo = data["licenseInfo"]
+        if not licenseInfo:
+            licenseInfo = {
+                "url": "",
+                "spdxId": "None"
+            }
 
         if options["long"]:
             grid.add_row(

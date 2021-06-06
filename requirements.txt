@@ -1,0 +1,4 @@
+rich>=10.0.0
+click>=7.1.1
+anytree>=2.8.0
+python-dotenv>=0.15.0
