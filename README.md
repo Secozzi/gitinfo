@@ -29,9 +29,10 @@ Options:
                              (Github repo).  [default: ]
 
   -d, --depth INTEGER RANGE  Depth to traverse file tree.  [default: 1]
-  -b, --branch TEXT          Enter branch name or commit hash to view files
-                             from that specific branch/commit.  [default:
-                             master]
+  -c, --collapse             Collapse each file in file tree
+  -b, --branch TEXT          Enter branch name or commit hash to view info or
+                             files from that specific branch/commit. Default
+                             is HEAD.
 
   --help                     Show this message and exit.
 ```
@@ -39,9 +40,8 @@ Options:
 ## Examples:
 
 ### Quick overview of a repository
-`gitinfo https://github.com/microsoft/vscode`
+`> gitinfo https://github.com/microsoft/vscode`
 
-result:
 ```
                          microsoft/vscode - Ratelimit: 4941
 ╭──────────────────────────────────────────────────────────────────────────────────╮
@@ -53,7 +53,7 @@ result:
 ```
 
 ### More detailed view:
-`gitinfo microsoft/terminal -l`
+`> gitinfo microsoft/terminal -l`
 
 ```
                                     microsoft/terminal - Ratelimit: 4998
@@ -70,7 +70,7 @@ result:
 ```
 
 ### Language breakdown
-`gitinfo https://github.com/torvalds/linux.git -L`
+`> gitinfo https://github.com/torvalds/linux.git -L`
 
 ```
              torvalds/linux - Ratelimit: 4996
@@ -86,22 +86,280 @@ result:
 ```
 
 ### Simple file tree query
-`gitinfo secozzi/gitinfo/useless_path/2 -f`
+`> gitinfo secozzi/gitinfo/useless_path/2 -f`
 
 ```
-./
+/secozzi/gitinfo
 ├── gitinfo/
 ├── .gitignore (1.76 KB)
 ├── LICENSE (1.04 KB)
-├── README.md (75 bytes)
-╰── setup.py (309 bytes)
+├── README.md (9.21 KB)
+├── requirements.txt (62 bytes)
+╰── setup.py (1.08 KB)
 ```
 
-### Advanced file tree query
-`gitinfo sympy/sympy -f --branch 1.7 --path sympy/integrals --depth 4`
+### Collapsed file tree query
+`> gitinfo microsoft/terminal -f -p src -c -d 3`
 
 ```
-./sympy/integrals/
+/microsoft/terminal/tree/main/src
+├── buffer/
+│   ├── out/
+│   │   ├── lib/
+│   │   ├── ut_textbuffer/
+│   │   ╰── 40 Files (265.8 KB)
+│   ╰── 1 Files (16 bytes)
+├── cascadia/
+│   ├── CascadiaPackage/
+│   │   ├── ProfileIcons/
+│   │   ├── Resources/
+│   │   ╰── 5 Files (29.9 KB)
+│   ├── inc/
+│   │   ╰── 2 Files (13.5 KB)
+│   ├── LocalTests_SettingsModel/
+│   │   ╰── 13 Files (282.33 KB)
+│   ├── LocalTests_TerminalApp/
+│   │   ├── TestHostApp/
+│   │   ╰── 11 Files (236.65 KB)
+│   ├── PublicTerminalCore/
+│   │   ╰── 6 Files (45.88 KB)
+│   ├── Remoting/
+│   │   ├── dll/
+│   │   ├── Resources/
+│   │   ╰── 29 Files (101.34 KB)
+│   ├── ShellExtension/
+│   │   ╰── 8 Files (15.39 KB)
+│   ├── TerminalApp/
+│   │   ├── dll/
+│   │   ├── Resources/
+│   │   ╰── 107 Files (767.14 KB)
+│   ├── TerminalAzBridge/
+│   │   ╰── 7 Files (11.67 KB)
+│   ├── TerminalConnection/
+│   │   ├── Resources/
+│   │   ╰── 22 Files (92.95 KB)
+│   ├── TerminalControl/
+│   │   ├── dll/
+│   │   ├── Resources/
+│   │   ╰── 44 Files (337.36 KB)
+│   ├── TerminalCore/
+│   │   ├── lib/
+│   │   ╰── 17 Files (160.0 KB)
+│   ├── TerminalSettingsEditor/
+│   │   ├── Resources/
+│   │   ╰── 78 Files (362.91 KB)
+│   ├── TerminalSettingsModel/
+│   │   ├── dll/
+│   │   ├── Resources/
+│   │   ╰── 72 Files (577.3 KB)
+│   ├── UnitTests_Control/
+│   │   ╰── 8 Files (44.11 KB)
+│   ├── UnitTests_Remoting/
+│   │   ╰── 5 Files (113.24 KB)
+│   ├── UnitTests_TerminalCore/
+│   │   ╰── 12 Files (251.2 KB)
+│   ├── ut_app/
+│   │   ╰── 10 Files (97.22 KB)
+│   ├── WindowsTerminal/
+│   │   ╰── 20 Files (185.48 KB)
+│   ├── WindowsTerminal_UIATests/
+│   │   ├── Common/
+│   │   ├── Elements/
+│   │   ╰── 5 Files (17.22 KB)
+│   ├── WindowsTerminalUniversal/
+│   │   ├── Resources/
+│   │   ╰── 9 Files (13.9 KB)
+│   ├── WinRTUtils/
+│   │   ├── inc/
+│   │   ╰── 8 Files (9.62 KB)
+│   ├── WpfTerminalControl/
+│   │   ╰── 9 Files (52.29 KB)
+│   ├── WpfTerminalTestNetCore/
+│   │   ├── Properties/
+│   │   ╰── 7 Files (8.45 KB)
+│   ├── wt/
+│   │   ╰── 4 Files (4.24 KB)
+│   ╰── 1 Files (1.8 KB)
+├── dep/
+│   ├── fmt/
+│   │   ╰── 2 Files (2.44 KB)
+│   ╰── 1 Files (20 bytes)
+├── host/
+│   ├── exe/
+│   │   ╰── 18 Files (69.7 KB)
+│   ├── ft_fuzzer/
+│   │   ╰── 2 Files (9.5 KB)
+│   ├── ft_host/
+│   │   ╰── 36 Files (1.98 MB)
+│   ├── ft_integrity/
+│   │   ╰── 7 Files (16.27 KB)
+│   ├── ft_uia/
+│   │   ├── Common/
+│   │   ├── Elements/
+│   │   ├── Properties/
+│   │   ╰── 19 Files (170.31 KB)
+│   ├── lib/
+│   │   ╰── 3 Files (13.04 KB)
+│   ├── proxy/
+│   │   ╰── 7 Files (8.28 KB)
+│   ├── ut_host/
+│   │   ╰── 38 Files (860.07 KB)
+│   ├── ut_lib/
+│   │   ╰── 2 Files (1.72 KB)
+│   ╰── 125 Files (1.26 MB)
+├── inc/
+│   ├── CppCoreCheck/
+│   │   ╰── 1 Files (15.28 KB)
+│   ├── test/
+│   │   ╰── 1 Files (11.9 KB)
+│   ├── til/
+│   │   ╰── 17 Files (203.88 KB)
+│   ╰── 21 Files (73.23 KB)
+├── interactivity/
+│   ├── base/
+│   │   ├── lib/
+│   │   ╰── 17 Files (52.91 KB)
+│   ├── inc/
+│   │   ╰── 13 Files (17.99 KB)
+│   ├── onecore/
+│   │   ├── lib/
+│   │   ╰── 22 Files (60.92 KB)
+│   ├── win32/
+│   │   ├── lib/
+│   │   ├── ut_interactivity_win32/
+│   │   ╰── 45 Files (269.57 KB)
+│   ╰── 1 Files (51 bytes)
+├── internal/
+│   ╰── 4 Files (2.84 KB)
+├── propsheet/
+│   ╰── 40 Files (325.37 KB)
+├── propslib/
+│   ╰── 14 Files (84.07 KB)
+├── renderer/
+│   ├── base/
+│   │   ├── lib/
+│   │   ╰── 14 Files (85.38 KB)
+│   ├── dx/
+│   │   ├── lib/
+│   │   ├── ut_dx/
+│   │   ╰── 17 Files (286.38 KB)
+│   ├── gdi/
+│   │   ├── lib/
+│   │   ├── tool/
+│   │   ╰── 9 Files (89.62 KB)
+│   ├── inc/
+│   │   ╰── 14 Files (25.69 KB)
+│   ├── uia/
+│   │   ├── lib/
+│   │   ╰── 4 Files (18.44 KB)
+│   ├── vt/
+│   │   ├── lib/
+│   │   ├── ut_lib/
+│   │   ╰── 17 Files (131.63 KB)
+│   ├── wddmcon/
+│   │   ├── lib/
+│   │   ╰── 8 Files (42.15 KB)
+│   ╰── 1 Files (61 bytes)
+├── server/
+│   ├── lib/
+│   │   ╰── 3 Files (8.52 KB)
+│   ╰── 47 Files (253.16 KB)
+├── staging/
+│   ╰── 2 Files (443 bytes)
+├── terminal/
+│   ├── adapter/
+│   │   ├── lib/
+│   │   ├── ut_adapter/
+│   │   ╰── 25 Files (231.67 KB)
+│   ├── input/
+│   │   ├── lib/
+│   │   ╰── 8 Files (69.56 KB)
+│   ├── parser/
+│   │   ├── ft_fuzzer/
+│   │   ├── ft_fuzzwrapper/
+│   │   ├── lib/
+│   │   ├── ut_parser/
+│   │   ╰── 22 Files (207.95 KB)
+│   ╰── 1 Files (45 bytes)
+├── testlist/
+│   ╰── 6 Files (2.18 KB)
+├── til/
+│   ├── ut_til/
+│   │   ╰── 21 Files (202.93 KB)
+│   ╰── 3 Files (1.87 KB)
+├── tools/
+│   ├── buffersize/
+│   │   ╰── 3 Files (4.85 KB)
+│   ├── closetest/
+│   │   ╰── 5 Files (35.49 KB)
+│   ├── ColorTool/
+│   │   ├── ColorTool/
+│   │   ├── schemes/
+│   │   ├── signing/
+│   │   ╰── 6 Files (11.73 KB)
+│   ├── echokey/
+│   │   ╰── 4 Files (12.87 KB)
+│   ├── fontlist/
+│   │   ╰── 3 Files (9.0 KB)
+│   ├── integrity/
+│   │   ├── exeuwp/
+│   │   ├── exewin32/
+│   │   ├── lib/
+│   │   ├── packageuwp/
+│   │   ╰── 1 Files (63 bytes)
+│   ├── lnkd/
+│   │   ╰── 5 Files (10.86 KB)
+│   ├── MonarchPeasantPackage/
+│   │   ├── Images/
+│   │   ╰── 2 Files (6.03 KB)
+│   ├── MonarchPeasantSample/
+│   │   ╰── 18 Files (2.64 MB)
+│   ├── nihilist/
+│   │   ╰── 7 Files (4.91 KB)
+│   ├── pixels/
+│   │   ╰── 5 Files (13.66 KB)
+│   ├── scratch/
+│   │   ╰── 3 Files (2.29 KB)
+│   ├── test/
+│   │   ╰── 4 Files (3.44 KB)
+│   ├── texttests/
+│   │   ╰── 2 Files (568 bytes)
+│   ├── U8U16Test/
+│   │   ╰── 10 Files (59.96 KB)
+│   ├── vtapp/
+│   │   ├── Properties/
+│   │   ╰── 8 Files (26.2 KB)
+│   ├── vtpipeterm/
+│   │   ╰── 7 Files (35.23 KB)
+│   ├── vttests/
+│   │   ╰── 4 Files (7.54 KB)
+│   ╰── 1 Files (68 bytes)
+├── tsf/
+│   ╰── 19 Files (98.71 KB)
+├── types/
+│   ├── inc/
+│   │   ╰── 12 Files (39.28 KB)
+│   ├── lib/
+│   │   ╰── 3 Files (9.73 KB)
+│   ├── ut_types/
+│   │   ╰── 6 Files (21.13 KB)
+│   ╰── 38 Files (303.34 KB)
+├── winconpty/
+│   ├── dll/
+│   │   ╰── 2 Files (3.02 KB)
+│   ├── ft_pty/
+│   │   ╰── 4 Files (20.42 KB)
+│   ├── lib/
+│   │   ╰── 1 Files (2.85 KB)
+│   ╰── 5 Files (22.74 KB)
+╰── 19 Files (64.4 KB)
+```
+
+### Complex file tree query
+`> gitinfo sympy/sympy -f --branch 1.7 --path sympy/integrals --depth 4`
+
+```
+/sympy/sympy/tree/1.7/sympy/integrals
 ├── benchmarks/
 │   ├── __init__.py (0 bytes)
 │   ├── bench_integrate.py (295 bytes)

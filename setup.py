@@ -15,7 +15,7 @@ def requires():
 
 setup(
     name="gitinfo",
-    version="1.0.3",
+    version="1.2.0",
     description="Quickly get information about a Github repository",
     long_description=readme(),
     long_description_content_type="text/markdown",

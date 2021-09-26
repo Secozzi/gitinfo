@@ -72,6 +72,7 @@ query($owner: String!, $repo: String!) {
 FILE_QUERY_1 = """\
 query RepoFiles($owner: String!, $repo: String!, $path: String!) {
 repository(owner: $owner, name: $repo) {
+    defaultBranchRef { name }
     object(expression: $path) {
         ... on Tree {
             entries {
@@ -146,10 +147,14 @@ def Size(input_bytes: int) -> str:
     help="Depth to traverse file tree."
 )
 @click.option(
-    "-b", "--branch", type=click.STRING, default="HEAD", show_default=True,
-    help="Enter branch name or commit hash to view info or files from that specific branch/commit."
+    "-c", "--collapse", is_flag=True, default=False,
+    help="Collapse each file in file tree"
 )
-def main(url, **options):
+@click.option(
+    "-b", "--branch", type=click.STRING, default="",
+    help="Enter branch name or commit hash to view info or files from that specific branch/commit. Default is HEAD."
+)
+def main(url: str, **options) -> None:
     """
     Displays information on a Github repository.
 
@@ -158,49 +163,60 @@ def main(url, **options):
     """
     if options["set_token"]:
         set_token(url)
-    elif options["file_tree"]:
-        if options["depth"] == 1:
-            depth = ""
-        else:
-            depth = f"... on Tree {{ entries {{ name type object {{... on Blob {{ byteSize }} }} }} }}"
-            for i in range(options["depth"] - 2):
-                depth = f"... on Tree {{ entries {{ name type object {{... on Blob {{ byteSize }} {depth} }} }} }}"
 
-        token = get_token()
-        owner, repo = get_url_info(url)
-        data, rate_limit = run_query(
-            FILE_QUERY_1 + depth + FILE_QUERY_2, token,
-            {
-                "owner": owner,
-                "repo": repo,
-                "path": f"{options['branch']}:{options['path']}"
-            }
-        )
-        if list(data.keys())[0] == "errors":
-            print(data["errors"][0]["message"])
+    token = get_token()
+    owner, repo = get_url_info(url)
+    query_variables = {
+        "owner": owner,
+        "repo": repo,
+        "branch": f"{options['branch'] if options['branch'] else 'HEAD'}"
+    }
+    if options["file_tree"]:
+        depth = ""
+        for i in range(options["depth"] - 1):
+            depth = f"... on Tree {{ entries {{ name type object {{... on Blob {{ byteSize }} {depth} }} }} }}"
+
+        query_variables["path"] = f"{options['branch'] if options['branch'] else 'HEAD'}:{options['path']}"
+
+        error, data, _ = get_data(FILE_QUERY_1 + depth + FILE_QUERY_2, token, query_variables)
+        if error:
+            print(data)
             return
-        try:
-            entries = data["data"]["repository"]["object"]["entries"]
-        except TypeError:
-            print("Query failed. Make sure path is correct.")
+
+        if not data["object"]:
+            print("No files available")
             return
+        entries = data["object"]["entries"]
+        branch_name = data["defaultBranchRef"]["name"]
 
         entries = sort_entries(entries)
-        root = populate_tree(f".{'/' if options['path'] else ''}{options['path']}", entries)
+        path = (
+            f"/{owner}"
+            f"/{repo}"
+            f"/tree"
+            f"/{options['branch'] if options['branch'] else branch_name}"
+            f"/{options['path']}"
+        ) if options["path"] else f"/{owner}/{repo}"
+        root = populate_tree(
+            f"[blue link https://github.com{path}]{path}[/]",
+            entries,
+            options["collapse"]
+        )
 
         for pre, fill, node in RenderTree(root, style=ContRoundStyle()):
             tree = "%s%s" % (pre, node.name)
             print(tree)
 
     elif options["lang"]:
-        token = get_token()
-        owner, repo = get_url_info(url)
-        data, rate_limit = run_query(LANG_QUERY, token, {"owner": owner, "repo": repo, "branch": options["branch"]})
-        if list(data.keys())[0] == "errors":
-            print(data["errors"][0]["message"])
+        error, data, rate_limit = get_data(LANG_QUERY, token, query_variables)
+        if error:
+            print(data)
             return
 
-        data = data["data"]["repository"]["languages"]
+        data = data["languages"]
+        if not data["edges"]:
+            print("Languages not available")
+            return
 
         total_size = data["totalSize"]
         total_count = data["totalCount"]
@@ -234,14 +250,10 @@ def main(url, **options):
 
         print(grid)
     else:
-        token = get_token()
-        owner, repo = get_url_info(url)
-        data, rate_limit = run_query(INFO_QUERY, token, {"owner": owner, "repo": repo, "branch": options["branch"]})
-        if list(data.keys())[0] == "errors":
-            print(data["errors"][0]["message"])
+        error, data, rate_limit = get_data(INFO_QUERY, token, query_variables)
+        if error:
+            print(data)
             return
-
-        data = data["data"]["repository"]
 
         grid = Table(
             show_header=False,
@@ -250,19 +262,27 @@ def main(url, **options):
             title=f'[green]{owner}/{repo}[/] - Ratelimit: [blue]{rate_limit}[/]'
         )
 
-        latestRelease = data["latestRelease"]
-        if not latestRelease:
-            latestRelease = {
-                "url": "",
-                "name": "None"
-            }
+        latestRelease = data["latestRelease"] or {
+            "url": "",
+            "name": "None"
+        }
 
-        licenseInfo = data["licenseInfo"]
-        if not licenseInfo:
-            licenseInfo = {
-                "url": "",
-                "spdxId": "None"
-            }
+        licenseInfo = data["licenseInfo"] or {
+            "url": "",
+            "spdxId": "None"
+        }
+
+        if data['languages']['nodes']:
+            language = data['languages']['nodes'][0]['name']
+        else:
+            language = "Not available"
+
+        disk_usage = data["diskUsage"] or 0
+
+        if data["object"]:
+            commit_count = data['object']['history']['totalCount']
+        else:
+            commit_count = "Not available"
 
         if options["long"]:
             grid.add_row(
@@ -282,7 +302,7 @@ def main(url, **options):
             )
             grid.add_row(
                 f"Latest Release - {Link(latestRelease['url'], latestRelease['name'])} ",
-                f"Disk usage     - {Size(data['diskUsage'] * 1024)} ",
+                f"Disk usage     - {Size(disk_usage * 1024)} ",
                 f"Is in org.  - {Bool(data['isInOrganization'])} "
             )
             grid.add_row(
@@ -296,7 +316,7 @@ def main(url, **options):
                 f"Is mirror   - {Bool(data['isMirror'])} "
             )
             grid.add_row(
-                f"Commit count   - {Number(data['object']['history']['totalCount'])} ",
+                f"Commit count   - {Number(commit_count)} ",
                 f"Closed Issues  - {Number(data['issues']['totalCount'] - data['openIssues']['totalCount'])}",
                 f"Is private  - {Bool(data['isPrivate'])} "
             )
@@ -308,7 +328,7 @@ def main(url, **options):
         else:
             grid.add_row(
                 f"Owner    - {Link(f'https://github.com/{owner}', owner)} ",
-                f"Disk usage - {Size(data['diskUsage'] * 1024)} ",
+                f"Disk usage - {Size(disk_usage * 1024)} ",
                 f"Created at  - {Date(data['createdAt'])} ",
             )
             grid.add_row(
@@ -322,7 +342,7 @@ def main(url, **options):
                 f"Pushed at   - {Date(data['pushedAt'])} ",
             )
             grid.add_row(
-                f"Language - [green]{data['languages']['nodes'][0]['name']}[/] ",
+                f"Language - [green]{language}[/] ",
                 f"Watchers   - {Number(data['watchers']['totalCount'])} ",
                 f"Open issues - {Number(data['openIssues']['totalCount'])} "
             )
